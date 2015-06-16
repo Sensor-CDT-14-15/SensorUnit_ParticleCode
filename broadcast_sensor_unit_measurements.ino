@@ -39,7 +39,7 @@ void publish_measurements() {
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
 	sprintf(publishString,"%.1f, %.1f, %d, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, maximum_noise);
-	Spark.publish("TL", publishString);
+	Spark.publish("measurements", publishString);
 }
 
 
