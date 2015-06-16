@@ -1,48 +1,58 @@
-double temperature, voltage, light, pir2, noise, noisemax;
+const int PIR_PIN         = A4;
+const int NOISE_PIN       = A5;
+const int PHOTOMETER_PIN  = A6;
+const int TEMPERATURE_PIN = A7;
+
+double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, maximum_noise;
+int thresholded_pir_reading;
 char publishString[40];
-int pir;
 
-void setup()
-{
-  pinMode(A7, INPUT);
-  pinMode(A6, INPUT);
-  pinMode(A4, INPUT);
-  pinMode(A5, INPUT);
-  Serial.begin(9600);
- // attachInterrupt(A4, pirPublish, CHANGE);
-}
 
-void loop()
-{
-pirNoise();
-Publish();
+void setup() {
+	pinMode(TEMPERATURE_PIN, INPUT);
+	pinMode(PHOTOMETER_PIN, INPUT);
+	pinMode(PIR_PIN, INPUT);
+	pinMode(NOISE_PIN, INPUT);
+	Serial.begin(9600);
 }
 
 
-void publish() {
-  voltage = analogRead(A7);
-  voltage = (voltage * 3.3) / 4095;
-  temperature = (2103 - voltage*1000)/10.9;
-  Serial.println(temperature);
-  light = analogRead(A6);
-  sprintf(publishString,"%.1f, %.1f, %d, %.1f",temperature, light, pir, noisemax);
-  Spark.publish("TL",publishString);
+void loop() {
+	measure_pir_and_noise();
+	publish_measurements();
 }
 
 
-void pirNoise() {
-  pir=0;
-  noise =0;
-  noisemax =0;
-  int i =0;
-   for (i=0; i < 500; i++){
-      //for(i; i++; i < 30 ) {
-      pir2 = analogRead(A4);
-      noise = analogRead(A5);
-      Serial.println(pir2);
-      Serial.println(noise);
-      if(pir2 > 3000) pir=1;
-      if(noise > noisemax) noisemax = noise;
-      delay(10);
-      }
+void publish_measurements() {
+	temperature_voltage = analogRead(TEMPERATURE_PIN);
+	// Convert DAC reading to millivolts
+	temperature_voltage = (temperature_voltage * 3.3 * 1000) / 4095;
+	// Convert millivolts to Celsius using datasheet equation
+	temperature_celsius = (2103 - temperature_voltage) / 10.9;
+	Serial.println(temperature_celsius);
+
+	light_voltage = analogRead(PHOTOMETER_PIN);
+
+	sprintf(publishString,"%.1f, %.1f, %d, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, maximum_noise);
+	Spark.publish("TL", publishString);
+}
+
+
+void measure_pir_and_noise() {
+	thresholded_pir_reading = 0;
+	noise_voltage = 0;
+	maximum_noise = 0;
+	for (int i = 0; i < 500; i++) {
+		raw_pir_reading = analogRead(PIR_PIN);
+		noise_voltage = analogRead(NOISE_PIN);
+		Serial.println(raw_pir_reading);
+		Serial.println(noise_voltage);
+		if (raw_pir_reading > 3000) {
+			thresholded_pir_reading = 1;
+		}
+		if (noise_voltage > maximum_noise) {
+			maximum_noise = noise_voltage;
+		}
+		delay(10);
+	}
 }
