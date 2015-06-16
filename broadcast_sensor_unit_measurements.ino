@@ -65,15 +65,17 @@ void measure_pir_and_noise() {
 }
 
 
-void set_debug_mode(String debug) {
+int set_debug_mode(String debug) {
 	// Convert debug string to lowercase
 	for (int i = 0; debug[i]; i++){
 		debug[i] = tolower(debug[i]);
 	}
 
 	if (debug == "1" || debug == "true") {
-		DEBUG_MODE == true;
+		DEBUG_MODE = true;
+		return 1;
 	} else {
 		DEBUG_MODE = false;
 	}
+	return 0;
 }
