@@ -6,6 +6,7 @@ const int TEMPERATURE_PIN = A7;
 double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, maximum_noise;
 int thresholded_pir_reading;
 char publishString[40];
+double noise_array[500];
 
 bool DEBUG_MODE = false;
 
@@ -47,14 +48,13 @@ void measure_pir_and_noise() {
 	thresholded_pir_reading = 0;
 	noise_voltage = 0;
 	maximum_noise = 0;
+
 	for (int i = 0; i < 500; i++) {
 		raw_pir_reading = analogRead(PIR_PIN);
-		noise_voltage = analogRead(NOISE_PIN);
+	//noise_voltage = analogRead(NOISE_PIN);
+		noise_array[i]= noise_voltage;
 		if (raw_pir_reading > 3000) {
 			thresholded_pir_reading = 1;
-		}
-		if (noise_voltage > maximum_noise) {
-			maximum_noise = noise_voltage;
 		}
 		if (DEBUG_MODE) {
 			Serial.println(raw_pir_reading);
@@ -62,6 +62,21 @@ void measure_pir_and_noise() {
 		}
 		delay(10);
 	}
+}
+
+void noise_max(){
+
+}
+
+
+void noise_standarddev(){
+
+}
+
+
+void noise_mean(){
+
+	
 }
 
 
