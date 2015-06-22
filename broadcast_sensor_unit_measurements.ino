@@ -26,6 +26,7 @@ void setup() {
 
 void loop() {
 	measure_pir_and_noise();
+	noise_analysis();
 	publish_measurements();
 }
 
@@ -37,12 +38,12 @@ void publish_measurements() {
 	// Convert millivolts to Celsius using datasheet equation
 	temperature_celsius = (2103 - temperature_voltage) / 10.9;
 	if(DEBUG_MODE) {
-		Serial.println(temperature_celsius);
+		Serial.println("Temperature (Celsius): " + String(temperature_celsius));
 	}
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
-	sprintf(publishString,"%.1f, %.1f, %d, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, maximum_noise);
+	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, maximum_noise,average_noise);
 	Spark.publish("measurements", publishString);
 }
 
@@ -53,14 +54,14 @@ void measure_pir_and_noise() {
 
 	for (int i = 0; i < 500; i++) {
 		raw_pir_reading = analogRead(PIR_PIN);
-	//noise_voltage = analogRead(NOISE_PIN);
+		noise_voltage = analogRead(NOISE_PIN);
 		noise_array[i]= noise_voltage;
 		if (raw_pir_reading > 3000) {
 			thresholded_pir_reading = 1;
 		}
 		if (DEBUG_MODE) {
-			Serial.println(raw_pir_reading);
-			Serial.println(noise_voltage);
+			Serial.println("PIR: " + String(raw_pir_reading));
+			Serial.println("Noise: " + String(noise_voltage));
 		}
 		delay(10);
 	}
@@ -96,7 +97,8 @@ int set_debug_mode(String debug) {
 	if (debug == "1" || debug == "true") {
 		DEBUG_MODE = true;
 		return 1;
-	} else {
+		}
+	else {
 		DEBUG_MODE = false;
 	}
 	return 0;
