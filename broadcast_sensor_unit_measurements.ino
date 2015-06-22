@@ -6,7 +6,7 @@ const int PHOTOMETER_PIN  = A6;
 const int TEMPERATURE_PIN = A7;
 const int ARRAY_LENGTH    = 500;
 
-double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, maximum_noise, average_noise, total_noise, standarddev_noise;
+double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance;
 int thresholded_pir_reading;
 char publishString[40];
 double noise_array[ARRAY_LENGTH];
@@ -43,7 +43,7 @@ void publish_measurements() {
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
-	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, maximum_noise,average_noise);
+	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average);
 	Spark.publish("measurements", publishString);
 }
 
@@ -55,7 +55,7 @@ void measure_pir_and_noise() {
 	for (int i = 0; i < 500; i++) {
 		raw_pir_reading = analogRead(PIR_PIN);
 		noise_voltage = analogRead(NOISE_PIN);
-		noise_array[i]= noise_voltage;
+		noise_array[i] = noise_voltage;
 		if (raw_pir_reading > 3000) {
 			thresholded_pir_reading = 1;
 		}
@@ -67,26 +67,26 @@ void measure_pir_and_noise() {
 	}
 }
 
-void noise_analysis( ){
-	maximum_noise = 0;
-	total_noise=0;
-	double variance[ARRAY_LENGTH];
-	double variance_sum = 0;
 
-	for (int i=0; i<ARRAY_LENGTH; i++){
-		if (noise_array[i]>maximum_noise) maximum_noise = noise_array[i];
-		total_noise += noise_array[i];
+void noise_analysis() {
+	double residuals[ARRAY_LENGTH];
+	noise_maximum = 0;
+	noise_average = 0;
+	noise_variance = 0;
+
+	for (int i = 0; i < ARRAY_LENGTH; i++) {
+		if (noise_array[i] > noise_maximum) noise_maximum = noise_array[i];
+		noise_total += noise_array[i];
 	}
-	average_noise = average_noise / ARRAY_LENGTH*1.0;
+	noise_average = noise_average / ARRAY_LENGTH * 1.0;
 
-	for (int i=0; i<ARRAY_LENGTH; i++){
-		variance[i] = noise_array[i] - average_noise;
-	    variance_sum += variance[i]*variance[i];
+	for (int i = 0; i < ARRAY_LENGTH; i++) {
+		residuals[i] = noise_array[i] - noise_average;
+		noise_variance += residuals[i] * residuals[i];
 	}
-    standarddev_noise = variance_sum/ARRAY_LENGTH;
-   // standarddev_noise = sqrt(standarddev_noise);
-
+	noise_variance = noise_variance / ARRAY_LENGTH * 1.0;
 }
+
 
 int set_debug_mode(String debug) {
 	// Convert debug string to lowercase
