@@ -33,7 +33,7 @@ void publish_measurements() {
 	// Convert millivolts to Celsius using datasheet equation
 	temperature_celsius = (2103 - temperature_voltage) / 10.9;
 	if(DEBUG_MODE) {
-		Serial.println(temperature_celsius);
+		Serial.println("Temperature (Celsius): " + String(temperature_celsius));
 	}
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
@@ -57,8 +57,8 @@ void measure_pir_and_noise() {
 			maximum_noise = noise_voltage;
 		}
 		if (DEBUG_MODE) {
-			Serial.println(raw_pir_reading);
-			Serial.println(noise_voltage);
+			Serial.println("PIR: " + String(raw_pir_reading));
+			Serial.println("Noise: " + String(noise_voltage));
 		}
 		delay(10);
 	}
