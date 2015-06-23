@@ -43,7 +43,7 @@ void publish_measurements() {
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
-	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average);
+	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average, noise_variance);
 	Spark.publish("measurements", publishString);
 }
 
@@ -52,7 +52,7 @@ void measure_pir_and_noise() {
 	thresholded_pir_reading = 0;
 	noise_voltage = 0;
 
-	for (int i = 0; i < 500; i++) {
+	for (int i = 0; i < ARRAY_LENGTH; i++) {
 		raw_pir_reading = analogRead(PIR_PIN);
 		noise_voltage = analogRead(NOISE_PIN);
 		noise_array[i] = noise_voltage;
@@ -85,6 +85,7 @@ void noise_analysis() {
 		noise_variance += residuals[i] * residuals[i];
 	}
 	noise_variance = noise_variance / ARRAY_LENGTH * 1.0;
+	noise_variance = sqrt(noise_variance);
 }
 
 
