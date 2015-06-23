@@ -6,7 +6,7 @@ const int PHOTOMETER_PIN  = A6;
 const int TEMPERATURE_PIN = A7;
 const int ARRAY_LENGTH    = 500;
 
-double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance;
+double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance, noise_sd;
 int thresholded_pir_reading;
 char publishString[40];
 double noise_array[ARRAY_LENGTH];
@@ -43,7 +43,7 @@ void publish_measurements() {
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
-	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average, noise_variance);
+	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average, noise_sd);
 	Spark.publish("measurements", publishString);
 }
 
@@ -85,7 +85,7 @@ void noise_analysis() {
 		noise_variance += residuals[i] * residuals[i];
 	}
 	noise_variance = noise_variance / ARRAY_LENGTH * 1.0;
-	noise_variance = sqrt(noise_variance);
+	noise_sd = sqrt(noise_variance);
 }
 
 
