@@ -97,8 +97,7 @@ int set_debug_mode(String debug) {
 	if (debug == "1" || debug == "true") {
 		DEBUG_MODE = true;
 		return 1;
-		}
-	else {
+		} else {
 		DEBUG_MODE = false;
 	}
 	return 0;
