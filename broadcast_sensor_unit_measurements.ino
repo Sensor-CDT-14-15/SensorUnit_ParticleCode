@@ -72,14 +72,13 @@ void noise_analysis() {
 	noise_maximum = 0;
 	noise_average = 0;
 	noise_variance = 0;
-	noise_total =0;
+	noise_total = 0;
 
 	for (int i = 0; i < ARRAY_LENGTH; i++) {
 		if (noise_array[i] > noise_maximum) noise_maximum = noise_array[i];
 		noise_total += noise_array[i];
 	}
 	noise_average = noise_total / (ARRAY_LENGTH * 1.0);
-	//noise_average = 25;
 
 	for (int i = 0; i < ARRAY_LENGTH; i++) {
 		residuals[i] = noise_array[i] - noise_average;
