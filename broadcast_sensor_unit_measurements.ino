@@ -1,11 +1,15 @@
+#include "math.h"
+
 const int PIR_PIN         = A4;
 const int NOISE_PIN       = A5;
 const int PHOTOMETER_PIN  = A6;
 const int TEMPERATURE_PIN = A7;
+const int ARRAY_LENGTH    = 500;
 
-double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, maximum_noise;
+double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance, noise_sd;
 int thresholded_pir_reading;
 char publishString[40];
+double noise_array[ARRAY_LENGTH];
 
 bool DEBUG_MODE = false;
 
@@ -19,9 +23,9 @@ void setup() {
 	Spark.function("debug", set_debug_mode);
 }
 
-
 void loop() {
 	measure_pir_and_noise();
+	noise_analysis();
 	publish_measurements();
 }
 
@@ -38,7 +42,7 @@ void publish_measurements() {
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
-	sprintf(publishString,"%.1f, %.1f, %d, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, maximum_noise);
+	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average, noise_variance);
 	Spark.publish("measurements", publishString);
 }
 
@@ -46,15 +50,13 @@ void publish_measurements() {
 void measure_pir_and_noise() {
 	thresholded_pir_reading = 0;
 	noise_voltage = 0;
-	maximum_noise = 0;
-	for (int i = 0; i < 500; i++) {
+
+	for (int i = 0; i < ARRAY_LENGTH; i++) {
 		raw_pir_reading = analogRead(PIR_PIN);
 		noise_voltage = analogRead(NOISE_PIN);
+		noise_array[i] = noise_voltage;
 		if (raw_pir_reading > 3000) {
 			thresholded_pir_reading = 1;
-		}
-		if (noise_voltage > maximum_noise) {
-			maximum_noise = noise_voltage;
 		}
 		if (DEBUG_MODE) {
 			Serial.println("PIR: " + String(raw_pir_reading));
@@ -62,6 +64,27 @@ void measure_pir_and_noise() {
 		}
 		delay(10);
 	}
+}
+
+
+void noise_analysis() {
+	double residuals[ARRAY_LENGTH];
+	noise_maximum = 0;
+	noise_average = 0;
+	noise_variance = 0;
+	noise_total = 0;
+
+	for (int i = 0; i < ARRAY_LENGTH; i++) {
+		if (noise_array[i] > noise_maximum) noise_maximum = noise_array[i];
+		noise_total += noise_array[i];
+	}
+	noise_average = noise_total / (ARRAY_LENGTH * 1.0);
+
+	for (int i = 0; i < ARRAY_LENGTH; i++) {
+		residuals[i] = noise_array[i] - noise_average;
+		noise_variance += residuals[i] * residuals[i];
+	}
+	noise_variance = noise_variance / (ARRAY_LENGTH * 1.0);
 }
 
 
@@ -74,7 +97,8 @@ int set_debug_mode(String debug) {
 	if (debug == "1" || debug == "true") {
 		DEBUG_MODE = true;
 		return 1;
-	} else {
+		}
+	else {
 		DEBUG_MODE = false;
 	}
 	return 0;
