@@ -73,7 +73,7 @@ void measure_pir_and_noise() {
 
 
 void noise_analysis() {
-	double residuals[ARRAY_LENGTH];
+	float residuals[ARRAY_LENGTH];
 	noise_maximum = 0;
 	noise_average = 0;
 	noise_variance = 0;
