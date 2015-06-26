@@ -45,6 +45,9 @@ void publish_measurements() {
 
 	sprintf(publishString,"%.1f, %.1f, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, noise_maximum, noise_average, noise_variance);
 	Spark.publish("measurements", publishString);
+	sprintf(publishString, "%.1f, %.1f", presence_percentage, num_consecutive_runs);
+	delay(500);
+	Spark.publish("measurements", publishString);
 }
 
 
