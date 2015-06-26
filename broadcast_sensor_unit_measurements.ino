@@ -113,7 +113,7 @@ void pir_analysis() {
 		}
 	}
 
-	presence_percentage = counts_over_1s * 1.0 / ARRAY_LENGTH;
+	presence_percentage = 100 * counts_over_1s * 1.0 / ARRAY_LENGTH;
 	num_consecutive_runs = longest_consecutive_run;
 }
 
