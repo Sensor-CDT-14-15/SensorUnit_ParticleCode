@@ -6,10 +6,10 @@ const int PHOTOMETER_PIN  = A6;
 const int TEMPERATURE_PIN = A7;
 const int ARRAY_LENGTH    = 500;
 
-double temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance, noise_sd;
-int thresholded_pir_reading;
+float temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance, noise_sd, presence_percentage, num_consecutive_runs;
 char publishString[40];
-double noise_array[ARRAY_LENGTH];
+float noise_array[ARRAY_LENGTH];
+int pir_array[ARRAY_LENGTH];
 
 bool DEBUG_MODE = false;
 
@@ -26,6 +26,7 @@ void setup() {
 void loop() {
 	measure_pir_and_noise();
 	noise_analysis();
+	pir_analysis();
 	publish_measurements();
 }
 
@@ -42,13 +43,14 @@ void publish_measurements() {
 
 	light_voltage = analogRead(PHOTOMETER_PIN);
 
-	sprintf(publishString,"%.1f, %.1f, %d, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, thresholded_pir_reading, noise_maximum, noise_average, noise_variance);
+	sprintf(publishString,"%.1f, %.1f, %.1f, %.1f, %.1f", temperature_celsius, light_voltage, noise_maximum, noise_average, noise_variance);
+	Spark.publish("measurements", publishString);
+	sprintf(publishString, "%.1f, %.1f", presence_percentage, num_consecutive_runs);
 	Spark.publish("measurements", publishString);
 }
 
 
 void measure_pir_and_noise() {
-	thresholded_pir_reading = 0;
 	noise_voltage = 0;
 
 	for (int i = 0; i < ARRAY_LENGTH; i++) {
@@ -56,7 +58,9 @@ void measure_pir_and_noise() {
 		noise_voltage = analogRead(NOISE_PIN);
 		noise_array[i] = noise_voltage;
 		if (raw_pir_reading > 3000) {
-			thresholded_pir_reading = 1;
+			pir_array[i] = 1;
+		} else {
+			pir_array[i] = 0;
 		}
 		if (DEBUG_MODE) {
 			Serial.println("PIR: " + String(raw_pir_reading));
@@ -68,7 +72,7 @@ void measure_pir_and_noise() {
 
 
 void noise_analysis() {
-	double residuals[ARRAY_LENGTH];
+	float residuals[ARRAY_LENGTH];
 	noise_maximum = 0;
 	noise_average = 0;
 	noise_variance = 0;
@@ -87,6 +91,30 @@ void noise_analysis() {
 	noise_variance = noise_variance / (ARRAY_LENGTH * 1.0);
 }
 
+
+void pir_analysis() {
+	int counts_over_1s = 0;
+	int longest_consecutive_run = 0;
+	int curr_num_consecutive = 0;
+
+	counts_over_1s = pir_array[0] == 1 ? 1 : 0;
+	for (int i = 1; i < ARRAY_LENGTH; i++) {
+		if (pir_array[i] == 1) {
+			++counts_over_1s;
+		}
+		if (pir_array[i] == 1 && pir_array[i-1] == 1) {
+			++curr_num_consecutive;
+		} else {
+			if (curr_num_consecutive > longest_consecutive_run) {
+				longest_consecutive_run = curr_num_consecutive;
+				curr_num_consecutive = 0;
+			}
+		}
+	}
+
+	presence_percentage = 100 * counts_over_1s * 1.0 / ARRAY_LENGTH;
+	num_consecutive_runs = longest_consecutive_run;
+}
 
 int set_debug_mode(String debug) {
 	// Convert debug string to lowercase
