@@ -28,6 +28,7 @@ void loop() {
 	noise_analysis();
 	pir_analysis();
 	publish_measurements();
+	delay(300000);
 }
 
 
@@ -45,8 +46,8 @@ void publish_measurements() {
 
 	sprintf(publishString,"temperature: %.1f, light: %.1f, noise-max: %.1f, noise-avg: %.1f, noise-var: %.1f", temperature_celsius, light_voltage, noise_maximum, noise_average, noise_variance);
 	Spark.publish("measurements", publishString);
-	delay(500);
-	sprintf(publishString, "presence: %.1f, num-runs: %.1f", presence_percentage, num_consecutive_runs);
+	delay(2000);
+	sprintf(publishString, "%.1f, %.1f", presence_percentage, num_consecutive_runs);
 	Spark.publish("measurements", publishString);
 }
 
