@@ -4,7 +4,7 @@ const int PIR_PIN         = A4;
 const int NOISE_PIN       = A5;
 const int PHOTOMETER_PIN  = A6;
 const int TEMPERATURE_PIN = A7;
-const int ARRAY_LENGTH    = 500;
+const int ARRAY_LENGTH    = 300;
 
 float temperature_celsius, temperature_voltage, light_voltage, raw_pir_reading, noise_voltage, noise_maximum, noise_average, noise_total, noise_variance, noise_sd, presence_percentage, num_consecutive_runs;
 char publishString[255];
@@ -28,7 +28,6 @@ void loop() {
 	noise_analysis();
 	pir_analysis();
 	publish_measurements();
-	delay(300000);
 }
 
 
@@ -68,7 +67,7 @@ void measure_pir_and_noise() {
 			Serial.println("PIR: " + String(raw_pir_reading));
 			Serial.println("Noise: " + String(noise_voltage));
 		}
-		delay(10);
+		delay(1000);
 	}
 }
 
